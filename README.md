@@ -1,18 +1,18 @@
 # imagine-on-plan
 
-Agent skill: generate images and videos on a **SuperGrok / Grok coding-plan** quota via Grok Build built-in tools. Does not use a console API key.
+Skill for any coding agent: make images/videos by driving **logged-in Grok Build**, so usage comes from the SuperGrok / coding-plan weekly pool — not a console API key.
 
-## Give this to any agent
+## Paste this to Claude / Codex / Cursor / etc.
 
 ```
 Read https://raw.githubusercontent.com/toolazytoname/imagine-on-plan/main/SKILL.md and follow it.
+You are not Grok. Call the local `grok` CLI as the skill says. Do not use XAI_API_KEY or api.x.ai.
+
 Then: <your image or video request>
 ```
 
-Or clone and point the agent at `SKILL.md`.
+The other agent shells out to `grok -p` with Imagine tools allowlisted. Grok must already be installed and logged in (`grok login`).
 
-Needs a **logged-in Grok Build** session (`image_gen`, `image_edit`, `image_to_video`). Other agents can read the skill; they cannot spend the plan without those tools.
+## Already inside Grok Build
 
-## Local Grok
-
-Copy or symlink `SKILL.md` to `~/.grok/skills/imagine-on-plan/SKILL.md`, then `/imagine-on-plan`.
+`/imagine-on-plan` or copy `SKILL.md` to `~/.grok/skills/imagine-on-plan/SKILL.md`.

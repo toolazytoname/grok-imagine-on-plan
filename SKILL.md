@@ -1,21 +1,68 @@
 ---
 name: imagine-on-plan
 description: >
-  Generate images and videos on a SuperGrok / Grok coding-plan quota using
-  Grok Build built-in Imagine tools. Use when the user asks to generate,
-  draw, or make an image, cover, poster, still, clip, or video; says
-  /imagine, /imagine-video, /imagine-on-plan; mentions 套餐、额度、封面、
-  竖屏、720p、图生视频; or wants Imagine without paying the xAI API.
+  Generate images and videos on a SuperGrok / Grok coding-plan quota by
+  calling Grok Build (native Imagine tools, or `grok -p` from any other
+  agent). Use when the user asks to generate, draw, or make an image,
+  cover, poster, still, clip, or video; says /imagine, /imagine-video,
+  /imagine-on-plan; wants another agent to use Grok; mentions 套餐、额度、
+  封面、竖屏、720p、图生视频; or wants Imagine without paying the xAI API.
 user-invocable: true
 ---
 
 # Imagine on plan
 
-Spend the logged-in SuperGrok / coding-plan weekly pool. Do not spend console API credits.
+Spend the logged-in SuperGrok / coding-plan weekly pool. Never spend console API credits.
 
-## Tools
+Do not call `https://api.x.ai`. Do not use `XAI_API_KEY`, `xai_sdk`, or an OpenAI-compatible Imagine client. Unset `XAI_API_KEY` on any `grok` process you spawn.
 
-If these tools exist, use only them:
+There is no text-to-video. Video = still first, then animate.
+
+---
+
+## If you are not Grok Build
+
+You do not have `image_gen`. Drive the user's **already-logged-in** `grok` CLI.
+
+1. `command -v grok` (common path: `~/.grok/bin/grok`). Missing → tell the user to install Grok Build and `grok login`.
+2. Confirm `~/.grok/auth.json` exists. Missing → `grok login`. Do not fall back to an API key.
+3. Decide settings from **Phrase → settings** below. Put them in the prompt; `grok -p` has no `--aspect-ratio` flag.
+4. Run (prefer `--prompt-file` so quotes survive):
+
+```bash
+unset XAI_API_KEY
+grok -p --yolo --verbatim \
+  --tools "image_gen,image_edit,image_to_video,reference_to_video" \
+  --max-turns 8 \
+  --prompt-file /tmp/imagine-on-plan-prompt.txt
+```
+
+Prompt file shape:
+
+```
+Follow imagine-on-plan. Use only the allowed Imagine tools. Do not call api.x.ai.
+
+Task: <user ask>
+Still prompt: <verbatim or drafted 2–5 sentences>
+aspect_ratio: 9:16
+If video: duration 6, resolution_name 480p
+Motion (one only): A slow cinematic push-in. Subject holds still.
+
+Print every output file as an absolute path. Do not describe the pixels.
+```
+
+5. Parse absolute `images/` / `videos/` paths from stdout. Copy into the user's dest if they named one.
+6. On ZDR / `output.upload_url`, quote it and stop.
+
+Outputs live under `~/.grok/sessions/<urlencoded-cwd>/<session-id>/images|videos/`.
+
+`grok -p` is itself an agent turn (Build quota + Imagine). Keep the prompt tight. One still or one clip per invocation unless the user asked for a sequence.
+
+---
+
+## If you are Grok Build
+
+Call the tools yourself. Do not shell out to another `grok`.
 
 | Need | Tool |
 |---|---|
@@ -24,21 +71,17 @@ If these tools exist, use only them:
 | Animate one still | `image_to_video` |
 | Multi-ref or preset voice | `reference_to_video` |
 
-If they are missing, stop. Tell the user to run this in logged-in Grok Build. Do not call `https://api.x.ai`, do not use `XAI_API_KEY`, `xai_sdk`, or an OpenAI-compatible Imagine client.
+Verbatim user prompts go into `prompt` unchanged.
 
-There is no text-to-video tool. Video = still first, then animate.
+On ZDR / `output.upload_url`, quote it and stop.
 
-If the user gives a full prompt and says verbatim, pass `prompt` unchanged.
+After success, give the saved path. Do not narrate the pixels.
 
-On a ZDR / `output.upload_url` video error, quote it and stop. Do not retry or switch to REST.
-
-After success, give the saved path (`images/1.jpg`, `videos/1.mp4`). Do not narrate the pixels.
-
-Charts, exact text, numbers, comic grids: build in code, not `image_gen`.
+Charts, exact text, numbers, comic grids: code, not `image_gen`.
 
 Named real people: `image_edit` from a real reference. Never `image_gen` a named person.
 
-Recurring character: one hero still, then `image_edit` / seed video from that file. Do not `image_gen` "the same person" again.
+Recurring character: one hero still, then `image_edit` / seed video from that file.
 
 ---
 
@@ -95,7 +138,7 @@ No 1080p, bitrate, or fps knobs. Do not crop in the video call.
 
 | Intent | Settings |
 |---|---|
-| Preview / save quota | Cover-simple or draft still + `480p` + `6` |
+| Preview / save quota | Draft or simple still + `480p` + `6` |
 | Ship | Cover-grade still + `720p` + `6` |
 
 Warp comes from a busy still or a multi-action prompt, not from 480p. Simplify the still or freeze the subject and move only the camera.
@@ -136,7 +179,7 @@ ffmpeg -f concat -safe 0 -i list.txt -c copy out.mp4
 | 长一点（单条） | `10` on `image_to_video` |
 | 预览视频 | `480p` + `6` + one slow move |
 | 能发 / 高清 / 720p | Cover still + `720p` + `6` |
-| 1080p | Say cap is 720p. Stay on built-in tools. |
+| 1080p | Cap is 720p. Stay on Grok tools / `grok -p`. |
 | 说话 / 指定声线 | `reference_to_video` + `voices` |
 | Still only | No video |
 | Video only | Still first anyway |
