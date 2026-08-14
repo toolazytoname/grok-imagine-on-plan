@@ -14,3 +14,5 @@ Then: <your image or video request>
 ```
 
 Requires Grok Build installed and `grok login` on that machine.
+
+**国内：** `grok` 必须带代理（`HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY`）。Skill 里写了检查步骤；没代理时不要硬调。

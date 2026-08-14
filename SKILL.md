@@ -19,6 +19,25 @@ Never call `https://api.x.ai`. Never use `XAI_API_KEY`, `xai_sdk`, or an OpenAI-
 
 There is no text-to-video. Video = still first, then animate.
 
+## 国内 / mainland China: proxy is required
+
+`api.x.ai` and `auth.x.ai` are often unreachable from mainland China without an HTTPS/SOCKS proxy. **Always put a proxy on the `grok` process in 国内.** Skipping this is the usual cause of timeout, TLS reset, or “connection refused”.
+
+1. Prefer the user's existing env: `HTTPS_PROXY`, `https_proxy`, `HTTP_PROXY`, `http_proxy`, `ALL_PROXY`, `all_proxy`.
+2. If none of those are set, **ask the user for their local proxy** (Clash / V2Ray / Surge listen address, often `http://127.0.0.1:7890` or similar). Do not invent a port.
+3. Export the same values on the `grok` command. `unset XAI_API_KEY` must **not** unset proxy vars.
+4. Keep `NO_PROXY`/`no_proxy` for localhost if the user already has it.
+
+```bash
+# attach before grok -p when in 国内
+export HTTPS_PROXY="${HTTPS_PROXY:-${https_proxy:-}}"
+export HTTP_PROXY="${HTTP_PROXY:-${http_proxy:-$HTTPS_PROXY}}"
+export ALL_PROXY="${ALL_PROXY:-${all_proxy:-}}"
+# if still empty → stop and ask the user for the proxy URL
+```
+
+If `grok -p` fails with network/TLS/timeout and the machine looks 国内 (timezone `Asia/Shanghai`, locale `zh_CN`, or the user said 国内/代理), treat missing proxy as the first fix. Do not fall back to `XAI_API_KEY` or `api.x.ai`.
+
 ## Call grok
 
 1. `command -v grok` (common: `~/.grok/bin/grok`). Missing → user installs Grok Build and runs `grok login`.
@@ -28,6 +47,7 @@ There is no text-to-video. Video = still first, then animate.
 
 ```bash
 unset XAI_API_KEY
+# 国内: HTTPS_PROXY / HTTP_PROXY / ALL_PROXY must already be set (see above)
 grok -p --yolo --verbatim \
   --tools "image_gen,image_edit,image_to_video,reference_to_video" \
   --max-turns 8 \
